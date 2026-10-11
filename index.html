@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="description" content="أداة لتخطيط المشاريع الجامعية لطلاب نظم المعلومات الإدارية: خطة من أربع مراحل وقائمة مهام وتقدم لحظي.">
+  <title>Project Scope &amp; Logic Navigator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧭</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><i class="fa-solid fa-compass-drafting"></i></span>
+      <div>
+        <h1><bdi>Project Scope &amp; Logic Navigator</bdi></h1>
+        <p class="brand-sub">خطّط مشروعك الجامعي من الفكرة إلى التسليم</p>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button type="button" class="btn btn-ghost" id="printBtn">
+        <i class="fa-solid fa-print"></i><span class="label">طباعة التقرير</span>
+      </button>
+      <button type="button" class="btn btn-ghost" id="downloadBtn">
+        <i class="fa-solid fa-file-arrow-down"></i><span class="label">تنزيل التقرير</span>
+      </button>
+      <button type="button" class="icon-btn" id="themeToggle" aria-label="تبديل الوضع الداكن والفاتح">
+        <i class="fa-solid fa-sun" id="themeIcon"></i>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- بيانات المشروع -->
+    <aside class="panel setup" aria-labelledby="setupTitle">
+      <h2 id="setupTitle">بيانات المشروع</h2>
+      <p class="hint">أدخل المعطيات الأربعة وسنوزّع الجهد على مراحل المشروع بما يناسب فريقك ووقتك.</p>
+
+      <form id="projectForm" novalidate>
+        <div class="field">
+          <label for="projectName">اسم المشروع</label>
+          <div class="input-wrap">
+            <i class="fa-regular fa-folder-open" aria-hidden="true"></i>
+            <input id="projectName" name="projectName" type="text" maxlength="80" autocomplete="off" placeholder="مثال: نظام إدارة مخزون الكلية">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="projectField">نوع التخصص</label>
+          <div class="input-wrap">
+            <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+            <select id="projectField" name="projectField"></select>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="teamSize">عدد أفراد الفريق</label>
+            <div class="stepper">
+              <button type="button" class="step-btn" data-step="teamSize" data-delta="-1" aria-label="إنقاص عدد الأفراد"><i class="fa-solid fa-minus"></i></button>
+              <input id="teamSize" name="teamSize" type="number" inputmode="numeric" min="1" max="12" step="1">
+              <button type="button" class="step-btn" data-step="teamSize" data-delta="1" aria-label="زيادة عدد الأفراد"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="weeks">المدة بالأسابيع</label>
+            <div class="stepper">
+              <button type="button" class="step-btn" data-step="weeks" data-delta="-1" aria-label="إنقاص المدة"><i class="fa-solid fa-minus"></i></button>
+              <input id="weeks" name="weeks" type="number" inputmode="numeric" min="4" max="52" step="1">
+              <button type="button" class="step-btn" data-step="weeks" data-delta="1" aria-label="زيادة المدة"><i class="fa-solid fa-plus"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <p class="form-error" id="formError" role="alert" hidden></p>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-block">
+            <i class="fa-solid fa-wand-magic-sparkles"></i><span>توليد خطة العمل</span>
+          </button>
+          <button type="button" class="btn btn-ghost" id="resetBtn" aria-label="إعادة ضبط كل البيانات">
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+        </div>
+
+        <p class="save-status" id="saveStatus">
+          <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+          <span id="saveStatusText">يُحفظ عملك تلقائياً في هذا المتصفح</span>
+        </p>
+      </form>
+    </aside>
+
+    <div class="stack">
+      <!-- الخطة -->
+      <section id="planSection" class="results" aria-live="polite" aria-label="خطة العمل"></section>
+
+      <!-- قائمة المهام -->
+      <section class="panel todo" aria-labelledby="todoTitle">
+        <div class="section-head">
+          <div>
+            <h2 id="todoTitle">قائمة المهام</h2>
+            <p class="hint">علّم المهام المنجزة ليتحدث شريط التقدم فوراً.</p>
+          </div>
+          <div class="head-actions">
+            <button type="button" class="btn btn-ghost btn-sm" id="importTasksBtn">
+              <i class="fa-solid fa-list-check"></i><span>إضافة مهام الخطة</span>
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" id="clearDoneBtn">
+              <i class="fa-regular fa-trash-can"></i><span>حذف المنجز</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="progress-block">
+          <div class="progress-top">
+            <strong class="progress-pct num" id="progressPct">0%</strong>
+            <span class="muted" id="progressCount">لا توجد مهام بعد</span>
+          </div>
+          <div class="progress" id="progressBar" role="progressbar" aria-label="نسبة إنجاز المهام" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="progressFill"></span>
+          </div>
+        </div>
+
+        <form id="taskForm" class="task-form" autocomplete="off">
+          <input id="taskText" type="text" maxlength="160" placeholder="أضف مهمة جديدة" aria-label="نص المهمة">
+          <select id="taskPhase" aria-label="مرحلة المهمة"></select>
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i><span>إضافة</span>
+          </button>
+        </form>
+
+        <div id="taskGroups"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==================== PERSONAL BRANDING FOOTER ==================== -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      
+      <!-- Developer Profile & Information -->
+      <div class="footer-profile">
+        <div class="avatar-wrap">
+          <!-- أستبدل رابط الصورة برابط صورتك الشخصية إن أردت -->
+          <img src="my-photo.jpg.jpeg" alt="صورة المطور" class="developer-avatar">
+          <span class="online-badge" title="متاح للمشاريع والتعاون"></span>
+        </div>
+        <div class="developer-info">
+          <h3 class="developer-name">سيف الدين جودة </h3>
+          <p class="developer-title">طالب نظم معلومات إدارية (MIS) &amp; مطور نظم وويب</p>
+        </div>
+      </div>
+
+      <!-- University Branding -->
+      <div class="footer-university">
+        <div class="university-badge">
+          <!-- شعار الجامعة الافتراضي (يمكنك استبدال مسار الصورة) -->
+          <img src="university-logo.png.gif" alt="شعار الجامعة" class="university-logo">
+          <div class="university-text">
+            <span class="uni-name">[ جامعة العلوم الإسلامية العالمية ]</span>
+            <span class="uni-dept">قسم نظم المعلومات الإدارية (MIS)</span>
+          </div>
+        </div>
+      </div>
+
+         <!-- Social Links & Contact -->
+        <div class="footer-socials">
+          <a href="https://www.linkedin.com/in/saifaldeenjoudeh" target="_blank" rel="noopener noreferrer" class="social-link linkedin" aria-label="LinkedIn">
+            <i class="fa-brands fa-linkedin-in"></i>
+          </a>
+          <a href="https://github.com/DevSaif1" target="_blank" rel="noopener noreferrer" class="social-link github" aria-label="GitHub">
+            <i class="fa-brands fa-github"></i>
+          </a>
+          <a href="https://www.instagram.com/sief.joudeh/" target="_blank" rel="noopener noreferrer" class="social-link instagram" aria-label="Instagram">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="mailto:saif.dev2005@gmail.com" class="social-link email" aria-label="Email">
+            <i class="fa-regular fa-envelope"></i>
+          </a>
+        </div>
+
+    <div class="footer-bottom">
+      <p>© 2026 جميع الحقوق محفوظة | صُمم وبُني بواسطة <strong class="highlight-name">سيف الدين جودة </strong></p>
+      <p class="privacy-note"><i class="fa-solid fa-shield-halved"></i> البيانات تُحفظ على جهازك فقط ولا تُرسل لأي سيرفر.</p>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <!-- يُملأ عند الطباعة -->
+  <div class="print-only" id="printReport"></div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
